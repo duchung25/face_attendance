@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Face Attendance</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Glassmorphic Sidebar / Navbar -->
+    <nav class="glass-nav">
+        <div class="logo">
+            <i class="fa-solid fa-face-smile-wink logo-icon"></i>
+            <span>FaceAttend</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-tab="register-tab">
+                <i class="fa-solid fa-user-plus"></i> <span>Đăng ký</span>
+            </li>
+            <li data-tab="checkin-tab">
+                <i class="fa-solid fa-fingerprint"></i> <span>Điểm danh</span>
+            </li>
+            <li data-tab="dashboard-tab" id="nav-dashboard">
+                <i class="fa-solid fa-chart-line"></i> <span>Dashboard Admin</span>
+            </li>
+        </ul>
+        <div class="nav-footer">
+            <span>v1.0.0</span>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- 1. REGISTER TAB -->
+        <section id="register-tab" class="tab-content active">
+            <div class="welcome-header">
+                <h1>Đăng ký Khuôn mặt mới</h1>
+                <p>Nhập thông tin tên và hướng khuôn mặt về phía camera để đăng ký vào hệ thống.</p>
+            </div>
+            
+            <div class="card glass-card fade-in">
+                <div class="card-body">
+                    <div class="input-group">
+                        <label for="register-name"><i class="fa-solid fa-signature"></i> Họ và tên nhân viên</label>
+                        <input type="text" id="register-name" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off">
+                    </div>
+                    
+                    <div class="camera-wrapper" id="register-camera-wrapper">
+                        <!-- Camera OFF state -->
+                        <div class="camera-off-screen" id="register-cam-off">
+                            <i class="fa-solid fa-camera camera-icon"></i>
+                            <p>Camera chưa được bật</p>
+                            <button class="btn btn-outline" id="btn-toggle-register-cam">
+                                <i class="fa-solid fa-video"></i> Bật Camera
+                            </button>
+                        </div>
+                        <!-- Camera ON state -->
+                        <div class="camera-live-wrapper" id="register-cam-live" style="display:none;">
+                            <video id="register-video" autoplay playsinline muted></video>
+                            <canvas id="register-canvas" style="display:none;"></canvas>
+                            <div class="camera-overlay">
+                                <div class="face-guide-box"></div>
+                                <span class="cam-status-badge" id="register-cam-status">🟢 Camera đang hoạt động</span>
+                            </div>
+                            <button class="btn btn-danger-sm" id="btn-stop-register-cam">
+                                <i class="fa-solid fa-video-slash"></i> Tắt
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="btn-register" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-user-check"></i> Đăng ký khuôn mặt
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. CHECK-IN TAB -->
+        <section id="checkin-tab" class="tab-content">
+            <div class="welcome-header">
+                <h1>Điểm danh nhận diện</h1>
+                <p>Nhấn nút quét dưới đây và nhìn thẳng vào camera để thực hiện check-in.</p>
+            </div>
+
+            <div class="card glass-card checkin-card fade-in">
+                <div class="card-body">
+                    <div class="camera-wrapper" id="checkin-camera-wrapper">
+                        <!-- Camera OFF state -->
+                        <div class="camera-off-screen" id="checkin-cam-off">
+                            <i class="fa-solid fa-user-shield camera-icon"></i>
+                            <p>Bật camera để bắt đầu điểm danh</p>
+                            <button class="btn btn-outline" id="btn-toggle-checkin-cam">
+                                <i class="fa-solid fa-video"></i> Bật Camera
+                            </button>
+                        </div>
+                        <!-- Camera ON state -->
+                        <div class="camera-live-wrapper" id="checkin-cam-live" style="display:none;">
+                            <video id="checkin-video" autoplay playsinline muted></video>
+                            <canvas id="checkin-canvas" style="display:none;"></canvas>
+                            <div class="camera-overlay">
+                                <div class="face-guide-box scanning-frame"></div>
+                                <span class="cam-status-badge" id="checkin-cam-status">🟢 Sẵn sàng điểm danh</span>
+                            </div>
+                            <button class="btn btn-danger-sm" id="btn-stop-checkin-cam">
+                                <i class="fa-solid fa-video-slash"></i> Tắt
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="btn-checkin" class="btn btn-success btn-block btn-lg">
+                        <i class="fa-solid fa-expand"></i> Quét khuôn mặt điểm danh
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. DASHBOARD TAB -->
+        <section id="dashboard-tab" class="tab-content">
+            <div class="welcome-header dashboard-header">
+                <div>
+                    <h1>Dashboard Thống kê Admin</h1>
+                    <p>Theo dõi tổng quan tình hình điểm danh và nhân sự trong ngày.</p>
+                </div>
+                <button id="btn-refresh-dashboard" class="btn btn-secondary">
+                    <i class="fa-solid fa-rotate"></i> Làm mới dữ liệu
+                </button>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card glass-card">
+                    <div class="stat-icon icon-users"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3>Tổng nhân sự</h3>
+                        <span id="stat-total-users" class="stat-value">-</span>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon icon-checkin"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-info">
+                        <h3>Check-in Hôm nay</h3>
+                        <span id="stat-today-checkins" class="stat-value">-</span>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon icon-ratio"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="stat-info">
+                        <h3>Tỷ lệ chuyên cần</h3>
+                        <span id="stat-attendance-rate" class="stat-value">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart & Detailed Tables -->
+            <div class="dashboard-details">
+                <div class="chart-container glass-card">
+                    <h2><i class="fa-solid fa-chart-column"></i> Thống kê trong ngày</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="attendance-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="users-list-container glass-card">
+                    <h2><i class="fa-solid fa-address-book"></i> Nhân viên đã đăng ký (<span id="user-count">0</span>)</h2>
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Họ và tên</th>
+                                    <th>Đường dẫn file Embedding</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Không có dữ liệu</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in Log Table -->
+            <div class="log-container glass-card">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Nhật ký check-in hôm nay</h2>
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Nhân viên</th>
+                                <th>ID Nhân viên</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Không có nhật ký check-in nào hôm nay</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
