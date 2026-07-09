@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+python-multipart
+
+numpy
+opencv-python
+
+insightface
+onnxruntime
+
+pillow
+
+pydantic
